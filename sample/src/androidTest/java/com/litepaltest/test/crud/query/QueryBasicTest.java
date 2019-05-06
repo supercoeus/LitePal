@@ -1,14 +1,24 @@
 package com.litepaltest.test.crud.query;
 
-import java.util.List;
-
-import org.litepal.crud.DataSupport;
+import android.support.test.filters.SmallTest;
 
 import com.litepaltest.model.Book;
 import com.litepaltest.test.LitePalTestCase;
 
+import org.junit.Test;
+import org.litepal.LitePal;
+
+import java.util.List;
+
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertFalse;
+import static junit.framework.TestCase.assertTrue;
+import static junit.framework.TestCase.fail;
+
+@SmallTest
 public class QueryBasicTest extends LitePalTestCase {
 
+    @Test
 	public void testFind() {
 		short isbn = 30013;
 		Book book = new Book();
@@ -20,7 +30,7 @@ public class QueryBasicTest extends LitePalTestCase {
 		book.setPrice(49.99);
 		book.setPublished(false);
 		book.save();
-		Book b = DataSupport.find(Book.class, book.getId());
+		Book b = LitePal.find(Book.class, book.getId());
 		assertEquals(book.getId(), b.getId());
 		assertEquals(10.5f, b.getArea());
 		assertEquals("Android First Line", b.getBookName());
@@ -32,6 +42,7 @@ public class QueryBasicTest extends LitePalTestCase {
 		assertTrue(b.isSaved());
 	}
 
+    @Test
 	public void testFindMul() {
 		short isbn1 = 30017;
 		Book book1 = new Book();
@@ -53,7 +64,7 @@ public class QueryBasicTest extends LitePalTestCase {
 		book2.setPrice(35.99);
 		book2.setPublished(false);
 		book2.save();
-		List<Book> bookList = DataSupport.findAll(Book.class, book1.getId(), book2.getId());
+		List<Book> bookList = LitePal.findAll(Book.class, book1.getId(), book2.getId());
 		assertEquals(2, bookList.size());
 		for (Book book : bookList) {
 			if (book.getId() == book1.getId()) {
@@ -81,9 +92,10 @@ public class QueryBasicTest extends LitePalTestCase {
 		}
 	}
 
+    @Test
 	public void testFindAll() {
 		List<Book> expectBooks = getBooks(null, null, null, null, null, null, null);
-		List<Book> realBooks = DataSupport.findAll(Book.class);
+		List<Book> realBooks = LitePal.findAll(Book.class);
 		assertEquals(expectBooks.size(), realBooks.size());
 		for (int i = 0; i < expectBooks.size(); i++) {
 			Book expectBook = expectBooks.get(i);
@@ -100,10 +112,11 @@ public class QueryBasicTest extends LitePalTestCase {
 		}
 	}
 
+    @Test
 	public void testFindFirst() {
 		List<Book> expectedBooks = getBooks(null, null, null, null, null, null, null);
 		Book expectedFirstBook = expectedBooks.get(0);
-		Book realFirstBook = DataSupport.findFirst(Book.class);
+		Book realFirstBook = LitePal.findFirst(Book.class);
 		assertEquals(expectedFirstBook.getId(), realFirstBook.getId());
 		assertEquals(expectedFirstBook.getBookName(), realFirstBook.getBookName());
 		assertEquals(expectedFirstBook.getPages(), realFirstBook.getPages());
@@ -115,10 +128,11 @@ public class QueryBasicTest extends LitePalTestCase {
 		assertTrue(realFirstBook.isSaved());
 	}
 
+    @Test
 	public void testFindLast() {
 		List<Book> expectedBooks = getBooks(null, null, null, null, null, null, null);
 		Book expectedLastBook = expectedBooks.get(expectedBooks.size() - 1);
-		Book realLastBook = DataSupport.findLast(Book.class);
+		Book realLastBook = LitePal.findLast(Book.class);
 		assertEquals(expectedLastBook.getId(), realLastBook.getId());
 		assertEquals(expectedLastBook.getBookName(), realLastBook.getBookName());
 		assertEquals(expectedLastBook.getPages(), realLastBook.getPages());
@@ -129,5 +143,29 @@ public class QueryBasicTest extends LitePalTestCase {
 		assertEquals(expectedLastBook.isPublished(), realLastBook.isPublished());
 		assertTrue(realLastBook.isSaved());
 	}
+
+    @Test
+    public void testIsExist() {
+        Book book = new Book();
+        book.setArea(10.5f);
+        book.setBookName("Android Third Line");
+        book.setPages(556);
+        book.setPrice(49.99);
+        book.setPublished(false);
+        book.save();
+
+        Book book2 = new Book();
+        book2.setArea(10.5f);
+        book2.setBookName("Android Fourth Line");
+        book2.setPages(818);
+        book2.setPrice(59.99);
+        book2.setPublished(false);
+        book2.save();
+
+        assertTrue(LitePal.isExist(Book.class, "bookname = ? and pages = ?", "Android Third Line", "556"));
+        assertFalse(LitePal.isExist(Book.class, "bookname = ? and pages = ?", "Android Third Lines", "556"));
+        assertTrue(LitePal.isExist(Book.class, "bookname = ? and pages = ?", "Android Fourth Line", "818"));
+        assertFalse(LitePal.isExist(Book.class, "bookname = ? and pages = ?", "Android Fourth Line", "813"));
+    }
 
 }

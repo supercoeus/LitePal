@@ -1,12 +1,17 @@
 package com.litepaltest.test.crud.update;
 
+import android.support.test.filters.SmallTest;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
-import org.litepal.crud.DataSupport;
+import org.junit.Before;
+import org.junit.Test;
+import org.litepal.LitePal;
+import org.litepal.extension.LitePalKt;
 import org.litepal.util.DBUtility;
 
 import com.litepaltest.model.Cellphone;
@@ -17,6 +22,11 @@ import com.litepaltest.model.Student;
 import com.litepaltest.model.Teacher;
 import com.litepaltest.test.LitePalTestCase;
 
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertFalse;
+import static junit.framework.TestCase.assertTrue;
+
+@SmallTest
 public class UpdateUsingSaveMethodTest extends LitePalTestCase {
     
     String classroomTable;
@@ -43,9 +53,8 @@ public class UpdateUsingSaveMethodTest extends LitePalTestCase {
 
 	private Teacher t2;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() {
         classroomTable = DBUtility.getTableNameByClassName(Classroom.class.getName());
         studentTable = DBUtility.getTableNameByClassName(Student.class.getName());
         teacherTable = DBUtility.getTableNameByClassName(Teacher.class.getName());
@@ -83,6 +92,7 @@ public class UpdateUsingSaveMethodTest extends LitePalTestCase {
 		t2.setAge(34);
 	}
 
+    @Test
 	public void testUpdateBasicValues() {
 		Cellphone cell = new Cellphone();
 		cell.setBrand("SamSung");
@@ -100,6 +110,33 @@ public class UpdateUsingSaveMethodTest extends LitePalTestCase {
 		assertTrue('N' == updatedCell.getInStock());
 	}
 
+    @Test
+    public void testUpdateGenericData() {
+        Classroom classroom = new Classroom();
+        classroom.setName("Classroom origin");
+        classroom.getNews().add("n");
+        classroom.getNews().add("e");
+        classroom.getNews().add("w");
+        classroom.getNumbers().add(1);
+        classroom.getNumbers().add(2);
+        classroom.getNumbers().add(3);
+        classroom.save();
+        classroom.setName("Classroom update");
+        classroom.getNews().add("s");
+        classroom.getNumbers().clear();
+        classroom.save();
+        Classroom c = LitePal.find(Classroom.class, classroom.get_id());
+        assertEquals("Classroom update", c.getName());
+        assertEquals(4, classroom.getNews().size());
+        assertEquals(0, classroom.getNumbers().size());
+        StringBuilder builder = new StringBuilder();
+        for (String s : classroom.getNews()) {
+            builder.append(s);
+        }
+        assertEquals("news", builder.toString());
+    }
+
+    @Test
     public void testUpdateBlobValues() {
         byte[] b = new byte[10];
         for (int i = 0; i < b.length; i++) {
@@ -109,13 +146,13 @@ public class UpdateUsingSaveMethodTest extends LitePalTestCase {
         product.setBrand("Android");
         product.setPrice(2899.69);
         product.setPic(b);
-        assertTrue(product.saveFast());
+        assertTrue(product.save());
         for (int i = 0; i < b.length; i++) {
             b[i] = (byte) (b.length - i);
         }
         product.setPic(b);
-        assertTrue(product.saveFast());
-        Product p = DataSupport.find(Product.class, product.getId());
+        assertTrue(product.save());
+        Product p = LitePal.find(Product.class, product.getId());
         byte[] pic = p.getPic();
         assertEquals(b.length, pic.length);
         for (int i = 0; i < b.length; i++) {
@@ -124,6 +161,7 @@ public class UpdateUsingSaveMethodTest extends LitePalTestCase {
         }
     }
 
+    @Test
 	public void testUpdateM2OAssociationsOnMSide() {
 		init();
 		s1.setClassroom(c1);
@@ -142,12 +180,13 @@ public class UpdateUsingSaveMethodTest extends LitePalTestCase {
 		assertTrue(s2.save());
 		assertEquals(c2.get_id(), getForeignKeyValue(studentTable, classroomTable, s1.getId()));
 		assertEquals(c2.get_id(), getForeignKeyValue(studentTable, classroomTable, s2.getId()));
-		Student student2 = DataSupport.find(Student.class, s2.getId());
+		Student student2 = LitePal.find(Student.class, s2.getId());
 		calendar.clear();
 		calendar.set(1989, 7, 7, 0, 0, 0);
 		assertEquals(calendar.getTimeInMillis(), student2.getBirthday().getTime());
 	}
 
+    @Test
 	public void testUpdateM2OAssociationsOnOSide() {
 		init();
 		c1.getStudentCollection().add(s1);
@@ -163,6 +202,7 @@ public class UpdateUsingSaveMethodTest extends LitePalTestCase {
 		assertEquals(c2.get_id(), getForeignKeyValue(studentTable, classroomTable, s2.getId()));
 	}
 
+    @Test
 	public void testUpdateM2OAssociationsOnMSideWithNotSavedModel() {
 		init();
 		s1.setClassroom(c1);
@@ -178,6 +218,7 @@ public class UpdateUsingSaveMethodTest extends LitePalTestCase {
 		assertEquals(c1.get_id(), getForeignKeyValue(studentTable, classroomTable, s2.getId()));
 	}
 
+    @Test
 	public void testUpdateM2OAssociationsOnOSideWithNotSavedModel() {
 		init();
 		c1.getStudentCollection().add(s1);
@@ -191,6 +232,7 @@ public class UpdateUsingSaveMethodTest extends LitePalTestCase {
 		assertEquals(c2.get_id(), getForeignKeyValue(studentTable, classroomTable, s1.getId()));
 	}
 
+    @Test
 	public void testUpdateM2OAssociationsOnMSideWithNull() {
 		init();
 		s1.setClassroom(c1);
@@ -206,6 +248,7 @@ public class UpdateUsingSaveMethodTest extends LitePalTestCase {
 		assertEquals(0, getForeignKeyValue(studentTable, classroomTable, s2.getId()));
 	}
 
+    @Test
 	public void testUpdateM2OAssociationsOnOSideWithNull() {
 		init();
 		s1.setClassroom(c1);
@@ -219,6 +262,7 @@ public class UpdateUsingSaveMethodTest extends LitePalTestCase {
 		assertEquals(0, getForeignKeyValue(studentTable, classroomTable, s2.getId()));
 	}
 
+    @Test
 	public void testUpdateM2OAssociationsOnOSideWithEmptyCollection() {
 		init();
 		s1.setClassroom(c1);
@@ -232,6 +276,7 @@ public class UpdateUsingSaveMethodTest extends LitePalTestCase {
 		assertEquals(0, getForeignKeyValue(studentTable, classroomTable, s2.getId()));
 	}
 
+    @Test
 	public void testUpdateO2OAssociations() {
 		init();
 		assertTrue(s3.save());
@@ -244,6 +289,7 @@ public class UpdateUsingSaveMethodTest extends LitePalTestCase {
 		assertEquals(id1.getId(), getForeignKeyValue(studentTable, idcardTable, s3.getId()));
 	}
 
+    @Test
 	public void testUpdateO2OAssociationsWithNull() {
 		init();
 		s3.setIdcard(id1);
@@ -258,6 +304,7 @@ public class UpdateUsingSaveMethodTest extends LitePalTestCase {
 		assertEquals(0, getForeignKeyValue(studentTable, idcardTable, s3.getId()));
 	}
 
+    @Test
 	public void testUpdateM2MAssociations() {
 		init();
 		assertTrue(s1.save());
@@ -296,6 +343,7 @@ public class UpdateUsingSaveMethodTest extends LitePalTestCase {
 				t2.getId()));
 	}
 
+    @Test
 	public void testUpdateM2MAssociationsWithNull() {
 		init();
 		List<Teacher> teachers = new LinkedList<Teacher>();
@@ -339,6 +387,7 @@ public class UpdateUsingSaveMethodTest extends LitePalTestCase {
 				t2.getId()));
 	}
 
+    @Test
 	public void testUpdateM2MAssociationsWithRefreshedCollection() {
 		init();
 		List<Teacher> teachers = new LinkedList<Teacher>();
@@ -386,6 +435,7 @@ public class UpdateUsingSaveMethodTest extends LitePalTestCase {
 				t2.getId()));
 	}
 
+    @Test
 	public void testUpdateM2MAssociationsWithEmptyCollection() {
 		init();
 		List<Teacher> teachers = new LinkedList<Teacher>();

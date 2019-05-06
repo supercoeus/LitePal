@@ -16,27 +16,23 @@
 
 package org.litepal.litepalsample.activity;
 
-import org.litepal.crud.DataSupport;
-import org.litepal.litepalsample.R;
-import org.litepal.litepalsample.model.Singer;
-
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-public class AverageSampleActivity extends Activity implements OnClickListener {
+import org.litepal.LitePal;
+import org.litepal.litepalsample.R;
+import org.litepal.litepalsample.model.Singer;
 
-	private Button mAvgBtn1;
+public class AverageSampleActivity extends AppCompatActivity implements OnClickListener {
 
-	private Button mAvgBtn2;
-
-	private EditText mAgeEdit;
+    private EditText mAgeEdit;
 
 	private TextView mResultText;
 
@@ -49,10 +45,10 @@ public class AverageSampleActivity extends Activity implements OnClickListener {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.average_sample_layout);
-		mAvgBtn1 = (Button) findViewById(R.id.avg_btn1);
-		mAvgBtn2 = (Button) findViewById(R.id.avg_btn2);
-		mAgeEdit = (EditText) findViewById(R.id.age_edit);
-		mResultText = (TextView) findViewById(R.id.result_text);
+        Button mAvgBtn1 = findViewById(R.id.avg_btn1);
+        Button mAvgBtn2 = findViewById(R.id.avg_btn2);
+		mAgeEdit = findViewById(R.id.age_edit);
+		mResultText = findViewById(R.id.result_text);
 		mAvgBtn1.setOnClickListener(this);
 		mAvgBtn2.setOnClickListener(this);
 	}
@@ -62,12 +58,12 @@ public class AverageSampleActivity extends Activity implements OnClickListener {
 		double result = 0;
 		switch (view.getId()) {
 		case R.id.avg_btn1:
-			result = DataSupport.average(Singer.class, "age");
+			result = LitePal.average(Singer.class, "age");
 			mResultText.setText(String.valueOf(result));
 			break;
 		case R.id.avg_btn2:
 			try {
-				result = DataSupport.where("age > ?", mAgeEdit.getText().toString()).average(
+				result = LitePal.where("age > ?", mAgeEdit.getText().toString()).average(
 						Singer.class, "age");
 				mResultText.setText(String.valueOf(result));
 			} catch (Exception e) {

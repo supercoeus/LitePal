@@ -16,27 +16,23 @@
 
 package org.litepal.litepalsample.activity;
 
-import org.litepal.crud.DataSupport;
-import org.litepal.litepalsample.R;
-import org.litepal.litepalsample.model.Singer;
-
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-public class SumSampleActivity extends Activity implements OnClickListener {
+import org.litepal.LitePal;
+import org.litepal.litepalsample.R;
+import org.litepal.litepalsample.model.Singer;
 
-	private Button mSumBtn1;
+public class SumSampleActivity extends AppCompatActivity implements OnClickListener {
 
-	private Button mSumBtn2;
-
-	private EditText mAgeEdit;
+    private EditText mAgeEdit;
 
 	private TextView mResultText;
 
@@ -49,10 +45,10 @@ public class SumSampleActivity extends Activity implements OnClickListener {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.sum_sample_layout);
-		mSumBtn1 = (Button) findViewById(R.id.sum_btn1);
-		mSumBtn2 = (Button) findViewById(R.id.sum_btn2);
-		mAgeEdit = (EditText) findViewById(R.id.age_edit);
-		mResultText = (TextView) findViewById(R.id.result_text);
+        Button mSumBtn1 = findViewById(R.id.sum_btn1);
+        Button mSumBtn2 = findViewById(R.id.sum_btn2);
+		mAgeEdit = findViewById(R.id.age_edit);
+		mResultText = findViewById(R.id.result_text);
 		mSumBtn1.setOnClickListener(this);
 		mSumBtn2.setOnClickListener(this);
 	}
@@ -62,12 +58,12 @@ public class SumSampleActivity extends Activity implements OnClickListener {
 		int result = 0;
 		switch (view.getId()) {
 		case R.id.sum_btn1:
-			result = DataSupport.sum(Singer.class, "age", Integer.TYPE);
+			result = LitePal.sum(Singer.class, "age", Integer.TYPE);
 			mResultText.setText(String.valueOf(result));
 			break;
 		case R.id.sum_btn2:
 			try {
-				result = DataSupport.where("age > ?", mAgeEdit.getText().toString()).sum(
+				result = LitePal.where("age > ?", mAgeEdit.getText().toString()).sum(
 						Singer.class, "age", Integer.TYPE);
 				mResultText.setText(String.valueOf(result));
 			} catch (Exception e) {

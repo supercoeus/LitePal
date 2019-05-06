@@ -1,7 +1,7 @@
 # LitePal for Android  
 ![Logo](https://github.com/LitePalFramework/LitePal/blob/master/sample/src/main/logo/mini_logo.png) 
 
-LitePal is an Open Source Android library that allows developers to use SQLite database extremely easy. You can finish most of the database operations without writing even a SQL statement, including create or upgrade tables, crud operations, aggregate functions, etc. The setup of LitePal is quite simple as well, you can integrate it into your project in less than 5 minutes. 
+LitePal is an open source Android library that allows developers to use SQLite database extremely easy. You can finish most of the database operations without writing even a SQL statement, including create or upgrade tables, crud operations, aggregate functions, etc. The setup of LitePal is quite simple as well, you can integrate it into your project in less than 5 minutes. 
 
 Experience the magic right now and have fun!
 
@@ -9,28 +9,31 @@ Experience the magic right now and have fun!
  * Using object-relational mapping (ORM) pattern.
  * Almost zero-configuration(only one configuration file with few properties).
  * Maintains all tables automatically(e.g. create, alter or drop tables).
+ * Multi databases supported.
  * Encapsulated APIs for avoiding writing SQL statements.
- * Awesome cluster query function.
+ * Awesome fluent query API.
  * Alternative choice to use SQL still, but easier and better APIs than the originals.
  * More for you to explore.
- 
-## Latest Downloads
- * **[litepal-1.3.1.jar](https://github.com/LitePalFramework/LitePal/raw/master/downloads/litepal-1.3.1.jar)** (library contains *.class files)
- * **[litepal-1.3.1-src.jar](https://github.com/LitePalFramework/LitePal/raw/master/downloads/litepal-1.3.1-src.jar)** (library contains *.class files and *.java files)
- 
+
 ## Quick Setup
 #### 1. Include library
-##### Using Eclipse
- * Download the latest jar in the above section. Or browse all versions **[here](https://github.com/LitePalFramework/LitePal/tree/master/downloads)** to choose one to download.
- * Put the jar into **libs** folder of your Android project.
- 
-##### Using Android Studio
-Edit your **build.gradle** file and add below dependency:
+
+Edit your **build.gradle** file and add below dependency.
+
+If you program with Java:
 ``` groovy
 dependencies {
-    compile 'org.litepal.android:core:1.3.1'
+    implementation 'org.litepal.android:java:3.0.0'
 }
 ```
+
+If you program with Kotlin:
+``` groovy
+dependencies {
+    implementation 'org.litepal.android:kotlin:3.0.0'
+}
+```
+
 #### 2. Configure litepal.xml
 Create a file in the **assets** folder of your project and name it as **litepal.xml**. Then copy the following codes into it.
 ``` xml
@@ -40,22 +43,22 @@ Create a file in the **assets** folder of your project and name it as **litepal.
     	Define the database name of your application. 
     	By default each database name should be end with .db. 
     	If you didn't name your database end with .db, 
-    	LitePal would plus the suffix automaticly for you.
+    	LitePal would plus the suffix automatically for you.
     	For example:    
-    	<dbname value="demo" ></dbname>
+    	<dbname value="demo" />
     -->
-    <dbname value="demo" ></dbname>
+    <dbname value="demo" />
 
     <!--
     	Define the version of your database. Each time you want 
     	to upgrade your database, the version tag would helps.
     	Modify the models you defined in the mapping tag, and just 
     	make the version value plus one, the upgrade of database
-    	will be processed automaticly without concern.
+    	will be processed automatically without concern.
 			For example:    
-    	<version value="1" ></version>
+    	<version value="1" />
     -->
-    <version value="1" ></version>
+    <version value="1" />
 
     <!--
     	Define your models in the list with mapping tag, LitePal will
@@ -63,109 +66,116 @@ Create a file in the **assets** folder of your project and name it as **litepal.
     	defined in models will be mapped into columns.
     	For example:    
     	<list>
-    		<mapping class="com.test.model.Reader"></mapping>
-    		<mapping class="com.test.model.Magazine"></mapping>
+    		<mapping class="com.test.model.Reader" />
+    		<mapping class="com.test.model.Magazine" />
     	</list>
     -->
     <list>
     </list>
+    
+    <!--
+        Define where the .db file should be. "internal" means the .db file
+        will be stored in the database folder of internal storage which no
+        one can access. "external" means the .db file will be stored in the
+        path to the directory on the primary external storage device where
+        the application can place persistent files it owns which everyone
+        can access. "internal" will act as default.
+        For example:
+        <storage value="external" />
+    -->
+    
 </litepal>
 ```
 This is the only configuration file, and the properties are simple. 
  * **dbname** configure the database name of project.
  * **version** configure the version of database. Each time you want to upgrade database, plus the value here.
  * **list** configure the mapping classes.
+ * **storage** configure where the database file should be stored. **internal** and **external** are the only valid options.
  
 #### 3. Configure LitePalApplication
 You don't want to pass the Context param all the time. To makes the APIs simple, just configure the LitePalApplication in **AndroidManifest.xml** as below:
 ``` xml
 <manifest>
-	<application
-		android:name="org.litepal.LitePalApplication"
-		...
-	>
-    ...
-	</application>
+    <application
+        android:name="org.litepal.LitePalApplication"
+        ...
+    >
+        ...
+    </application>
 </manifest>
 ```
 Of course you may have your own Application and has already configured here, like:
 ``` xml
 <manifest>
-	<application
-		android:name="com.example.MyOwnApplication"
-		...
-	>
-    ...
-	</application>
+    <application
+        android:name="com.example.MyOwnApplication"
+        ...
+    >
+        ...
+    </application>
 </manifest>
 ```
-That's OK. LitePal can still live with that. Just change the inheritance of **MyOwnApplication** from **Application** to **LitePalApplication**, like:
-``` java
-public class MyOwnApplication extends LitePalApplication {
-	...
-}
-```
-Finally, if it still didn't work for you because you have to inherit from another Application. In this case, you can call **LitePalApplication.initialize(context)** instead of inheritance:
+That's OK. LitePal can still live with that. Just call **LitePal.initialize(context)** in your own Application:
 ```java
-public class MyOwnApplication extends AnotherApplication {
+public class MyOwnApplication extends Application {
 
-	@Override
-	public void onCreate() {
-		super.onCreate();
-		LitePalApplication.initialize(this);
-	}
-	...
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        LitePal.initialize(this);
+    }
+    ...
 }
 ```
-Just make sure to call this method as early as you can. In the **onCreate()** method of Application will be fine. And always remember to use the application context as parameter. Do not use any intance of activity or service as parameter, or memory leaks might happen.
+Make sure to call this method as early as you can. In the **onCreate()** method of Application will be fine. And always remember to use the application context as parameter. Do not use any instance of activity or service as parameter, or memory leaks might happen.
 ## Get Started
-After setup, you can experience the powerful function now.
+After setup, you can experience the powerful functions now.
 
 #### 1. Create tables
 Define the models first. For example you have two models, **Album** and **Song**. The models can be defined as below:
 ``` java
-public class Album extends DataSupport {
+public class Album extends LitePalSupport {
 	
-	@Column(unique = true, defaultValue = "unknown")
-	private String name;
+    @Column(unique = true, defaultValue = "unknown")
+    private String name;
 	
-	private float price;
+    private float price;
 	
-	private byte[] cover;
+    private byte[] cover;
 	
-	private List<Song> songs = new ArrayList<Song>();
+    private List<Song> songs = new ArrayList<Song>();
 
-	// generated getters and setters.
-	...
+    // generated getters and setters.
+    ...
 }
 ```
 ``` java
-public class Song extends DataSupport {
+public class Song extends LitePalSupport {
 	
-	@Column(nullable = false)
-	private String name;
+    @Column(nullable = false)
+    private String name;
 	
-	private int duration;
+    private int duration;
 	
-	@Column(ignore = true)
-	private String uselessField;
+    @Column(ignore = true)
+    private String uselessField;
 	
-	private Album album;
+    private Album album;
 
-	// generated getters and setters.
-	...
+    // generated getters and setters.
+    ...
 }
 ```
 Then add these models into the mapping list in **litepal.xml**:
 ``` xml
 <list>
-    <mapping class="org.litepal.litepalsample.model.Album"></mapping>
-    <mapping class="org.litepal.litepalsample.model.Song"></mapping>
+    <mapping class="org.litepal.litepalsample.model.Album" />
+    <mapping class="org.litepal.litepalsample.model.Song" />
 </list>
 ```
 OK! The tables will be generated next time you operate database. For example, gets the **SQLiteDatabase** with following codes:
 ``` java
-SQLiteDatabase db = Connector.getDatabase();
+SQLiteDatabase db = LitePal.getDatabase();
 ```
 Now the tables will be generated automatically with SQLs like this:
 ``` sql
@@ -185,24 +195,24 @@ CREATE TABLE song (
 ```
 
 #### 2. Upgrade tables
-Upgrade tables in LitePal is extremely easy. Just modify your models everyway you want:
+Upgrade tables in LitePal is extremely easy. Just modify your models anyway you want:
 ```java
-public class Album extends DataSupport {
+public class Album extends LitePalSupport {
 	
-	@Column(unique = true, defaultValue = "unknown")
-	private String name;
+    @Column(unique = true, defaultValue = "unknown")
+    private String name;
 	
-	@Column(ignore = true)
-	private float price;
+    @Column(ignore = true)
+    private float price;
 	
-	private byte[] cover;
+    private byte[] cover;
 	
-	private Date releaseDate;
+    private Date releaseDate;
 	
-	private List<Song> songs = new ArrayList<Song>();
+    private List<Song> songs = new ArrayList<Song>();
 
-	// generated getters and setters.
-	...
+    // generated getters and setters.
+    ...
 }
 ```
 A **releaseDate** field was added and **price** field was annotated to ignore.
@@ -213,23 +223,25 @@ Then increase the version number in **litepal.xml**:
     to upgrade your database, the version tag would helps.
     Modify the models you defined in the mapping tag, and just 
     make the version value plus one, the upgrade of database
-    will be processed automaticly without concern.
+    will be processed automatically without concern.
     For example:    
-    <version value="1" ></version>
+    <version value="1" />
 -->
-<version value="2" ></version>
+<version value="2" />
 ```
 The tables will be upgraded next time you operate database. A **releasedate** column will be added into **album** table and the original **price** column will be removed. All the data in **album** table except those removed columns will be retained.
 
 But there are some upgrading conditions that LitePal can't handle and all data in the upgrading table will be cleaned:
  * Add a field which annotated as `unique = true`.
- * Change a field's annoation into `unique = true`.
- * Change a field's annoation into `nullable = false`.
+ * Change a field's annotation into `unique = true`.
+ * Change a field's annotation into `nullable = false`.
 
 Be careful of the above conditions which will cause losing data.
 
 #### 3. Save data
-The saving API is quite object oriented. Each model which inherits from **DataSupport** would have the **save()** method directly.
+The saving API is quite object oriented. Each model which inherits from **LitePalSupport** would have the **save()** method for free.
+
+Java:
 ``` java
 Album album = new Album();
 album.setName("album");
@@ -242,59 +254,260 @@ song1.setDuration(320);
 song1.setAlbum(album);
 song1.save();
 Song song2 = new Song();
-song2.setName("song2");;
+song2.setName("song2");
 song2.setDuration(356);
 song2.setAlbum(album);
 song2.save();
 ```
-This will insert album, song1 and song2 into database with relations.
+
+Kotlin:
+```kotlin
+val album = Album()
+album.name = "album"
+album.price = 10.99f
+album.cover = getCoverImageBytes()
+album.save()
+val song1 = Song()
+song1.name = "song1"
+song1.duration = 320
+song1.album = album
+song1.save()
+val song2 = Song()
+song2.name = "song2"
+song2.duration = 356
+song2.album = album
+song2.save()
+```
+This will insert album, song1 and song2 into database with associations.
 
 #### 4. Update data
-The simplest way, use **save()** method to update a record found by **find()**:
+The simplest way, use **save()** method to update a record found by **find()**.
+
+Java:
 ``` java
-Album albumToUpdate = DataSupport.find(Album.class, 1);
+Album albumToUpdate = LitePal.find(Album.class, 1);
 albumToUpdate.setPrice(20.99f); // raise the price
 albumToUpdate.save();
 ```
-Each model which inherits from **DataSupport** would also have **update()** and **updateAll()** method. You can update a single record with a specified id:
+
+Kotlin:
+```kotlin
+val albumToUpdate = LitePal.find<Album>(1)
+albumToUpdate.price = 20.99f // raise the price
+albumToUpdate.save()
+```
+
+Each model which inherits from **LitePalSupport** would also have **update()** and **updateAll()** method. You can update a single record with a specified id.
+
+Java:
 ``` java
 Album albumToUpdate = new Album();
 albumToUpdate.setPrice(20.99f); // raise the price
 albumToUpdate.update(id);
 ```
-Or you can update multiple records with a where condition:
+
+Kotlin:
+```kotlin
+val albumToUpdate = Album()
+albumToUpdate.price = 20.99f // raise the price
+albumToUpdate.update(id)
+```
+
+Or you can update multiple records with a where condition.
+
+Java:
 ``` java
 Album albumToUpdate = new Album();
 albumToUpdate.setPrice(20.99f); // raise the price
 albumToUpdate.updateAll("name = ?", "album");
 ```
 
-#### 5. Delete data
-You can delete a single record using the static **delete()** method in **DataSupport**:
-``` java
-DataSupport.delete(Song.class, id);
+Kotlin:
+```kotlin
+val albumToUpdate = Album()
+albumToUpdate.price = 20.99f // raise the price
+albumToUpdate.updateAll("name = ?", "album")
 ```
-Or delete multiple records using the static **deleteAll()** method in **DataSupport**:
+
+#### 5. Delete data
+You can delete a single record using the static **delete()** method in **LitePal**.
+
+Java:
 ``` java
-DataSupport.deleteAll(Song.class, "duration > ?" , "350");
+LitePal.delete(Song.class, id);
+```
+
+Kotlin:
+```kotlin
+LitePal.delete<Song>(id)
+```
+
+Or delete multiple records using the static **deleteAll()** method in **LitePal**.
+
+Java:
+``` java
+LitePal.deleteAll(Song.class, "duration > ?" , "350");
+```
+
+Kotlin:
+```kotlin
+LitePal.deleteAll<Song>("duration > ?" , "350")
 ```
 
 #### 6. Query data
-Find a single record from song table with specified id:
+Find a single record from song table with specified id.
+
+Java:
 ``` java
-Song song = DataSupport.find(Song.class, id);
+Song song = LitePal.find(Song.class, id);
 ```
-Find all records from song table:
-``` java
-List<Song> allSongs = DataSupport.findAll(Song.class);
+
+Kotlin:
+```kotlin
+val song = LitePal.find<Song>(id)
 ```
-Constructing complex query with cluster query:
+
+Find all records from song table.
+
+Java:
 ``` java
-List<Song> songs = DataSupport.where("name like ?", "song%").order("duration").find(Song.class);
+List<Song> allSongs = LitePal.findAll(Song.class);
+```
+
+Kotlin:
+```kotlin
+val allSongs = LitePal.findAll<Song>()
+```
+
+Constructing complex query with fluent query.
+
+Java:
+``` java
+List<Song> songs = LitePal.where("name like ? and duration < ?", "song%", "200").order("duration").find(Song.class);
+```
+
+Kotlin:
+``` kotlin
+val songs = LitePal.where("name like ? and duration < ?", "song%", "200").order("duration").find<Song>()
+```
+
+#### 7. Async operations
+Every database operation is on main thread by default. If your operation might spent a long time,
+for example saving or querying tons of records. You may want to use async operations.
+
+LitePal support async operations on all crud methods. If you want to find all records from song table
+on a background thread, use codes like this.
+
+Java:
+```java
+LitePal.findAllAsync(Song.class).listen(new FindMultiCallback<Song>() {
+    @Override
+    public void onFinish(List<Song> allSongs) {
+    
+    }
+});
+```
+
+Kotlin:
+```kotlin
+LitePal.findAsync<Song>().listen { allSongs ->
+
+}
+```
+
+Just use **findAllAsync()** instead of **findAll()**, and append a **listen()** method, the finding result will
+be callback to **onFinish()** method once it finished.
+
+Abd saving asynchronously is quite the same.
+
+Java:
+```java
+Album album = new Album();
+album.setName("album");
+album.setPrice(10.99f);
+album.setCover(getCoverImageBytes());
+album.saveAsync().listen(new SaveCallback() {
+    @Override
+    public void onFinish(boolean success) {
+
+    }
+});
+```
+
+Kotlin:
+```kotlin
+val album = Album()
+album.name = "album"
+album.price = 10.99f
+album.cover = getCoverImageBytes()
+album.saveAsync().listen { success ->
+
+}
+```
+
+Just use **saveAsync()** instead of **save()**. It will save Album into database on a background, and
+the saving result will be callback to **onFinish()** method.
+
+#### 8. Multiple databases
+If your app needs multiple databases, LitePal support it completely. You can create as many databases as you want at runtime. For example:
+```java
+LitePalDB litePalDB = new LitePalDB("demo2", 1);
+litePalDB.addClassName(Singer.class.getName());
+litePalDB.addClassName(Album.class.getName());
+litePalDB.addClassName(Song.class.getName());
+LitePal.use(litePalDB);
+```
+This will create a **demo2** database with **singer**, **album** and **song** tables.
+
+If you just want to create a new database but with same configuration as **litepal.xml**, you can do it with:
+```java
+LitePalDB litePalDB = LitePalDB.fromDefault("newdb");
+LitePal.use(litePalDB);
+```
+You can always switch back to default database with:
+```java
+LitePal.useDefault();
+```
+And you can delete any database by specified database name:
+```java
+LitePal.deleteDatabase("newdb");
+```
+
+#### 9. Listen database create or upgrade
+If you need to listen database create or upgrade events and fill some initial data in the callbacks, you can do it like this:
+```java
+LitePal.registerDatabaseListener(new DatabaseListener() {
+    @Override
+    public void onCreate() {
+    	// fill some initial data
+    }
+
+    @Override
+    public void onUpgrade(int oldVersion, int newVersion) {
+    	// upgrade data in db
+    }
+});
+```
+
+## ProGuard
+If you are using ProGuard you might need to add the following option:
+
+```proguard
+-keep class org.litepal.** {
+    *;
+}
+
+-keep class * extends org.litepal.crud.DataSupport {
+    *;
+}
+
+-keep class * extends org.litepal.crud.LitePalSupport {
+    *;
+}
 ```
 
 ## Developed By
- * Tony Green - tonygreendev@gmail.com
+ * Tony Green
  
 ## Sample App
 The sample app has been published onto Google Play for easy access. 
@@ -304,16 +517,56 @@ Get it on:
 [![Google Play](http://www.gstatic.com/android/market_images/web/play_logo.png)](https://play.google.com/store/apps/details?id=org.litepal.litepalsample)
 
 ## Bugs Report
-If you find any bug when using LitePal, please report **[here](https://github.com/LitePalFramework/LitePal/issues/new)**. Thanks for helping us building a better one.
+If you find any bug when using LitePal, please report **[here](https://github.com/LitePalFramework/LitePal/issues/new)**. Thanks for helping us making better.
 
 ## Change logs
+
+### 3.0.0
+ * Optimize generic usage for async operation APIs.
+ * Add **LitePal.registerDatabaseListener()** method for listening create or upgrade database events.
+ * Provider better CRUD API usage for using generic declaration instead of Class parameter for kotlin.
+ * Fix known bugs.
+
+### 2.0.0
+ * Offer new APIs for CRUD operations. Deprecate **DataSupport**, use **LitePal** and **LitePalSupport** instead.
+ * Fully support kotlin programming.
+ * Fix known bugs.
+
+### 1.6.1
+ * Support AES and MD5 encryption with @Encrypt annotation on fields.
+ * Support to store database file on any directory of external storage.
+ * Fix known bugs.
+
+### 1.5.1
+ * Support async operations for all crud methods.
+ * Add **saveOrUpdate()** method in DataSupport.
+ * Fix known bugs.
+
+### 1.4.1
+ * Fix bug of DateSupport.count error.
+ * Fix bug of losing blob data when upgrading database.
+ * Fix other known bugs.
+
+### 1.4.0
+ * Support multiple databases.
+ * Support crud operations for generic collection data in models.
+ * Add SQLite keywords convert function to avoid keywords conflict.
+ * Fix known bugs.
+ 
+### 1.3.2
+ * Improve an outstanding speed up of querying and saving.
+ * Support to store database file in external storage.
+ * Support to mapping fields which inherit from superclass.
+ * Add **findFirst()** and **findLast()** in fluent query.
+ * Add **isExist()** and **saveIfNotExist()** method in DataSupport.
+
 ### 1.3.1
  * Support storing binary data. Byte array field will be mapped into database as blob type.
  * Add **saveFast()** method in DataSupport. If your model has no associations to handle, use **saveFast()** method will be much more efficient.
  * Improve query speed with optimized algorithm.
  
 ### 1.3.0
- * Add annotation functions to decalre **unique**, **not null** and **default** constraints.
+ * Add annotation functions to declare **unique**, **not null** and **default** constraints.
  * Remove the trick of ignore mapping fields with non-private modifier.
  * Support to use annotation to ignore mapping fields with `ignore = true`
  * Add some magical methods in DataSupport for those who understand LitePal deeper.
